@@ -363,7 +363,7 @@
             background: rgba(10, 14, 23, 0.95);
             border: 2px solid #00f3ff;
             border-radius: 12px;
-            width: 440px;
+            width: 450px; /* 가로 길이 확장 (문구 줄바꿈 방지) */
             padding: 40px 30px;
             text-align: center;
             box-shadow: 0 0 40px rgba(0, 243, 255, 0.4), inset 0 0 20px rgba(0, 243, 255, 0.15);
@@ -377,6 +377,7 @@
         }
 
         .modal-card.hidden-super-card {
+            width: 540px !important;
             border: 2px solid #ffe600 !important;
             animation: cyberCardGlowSync 1.8s infinite ease-in-out !important;
         }
@@ -406,10 +407,11 @@
             letter-spacing: 2px;
             margin-bottom: 10px;
             font-weight: bold;
+            white-space: nowrap; /* 헤더 문구 줄바꿈 방지 */
         }
 
         .modal-title {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: #ffffff;
             text-shadow: 0 0 10px #ffffff;
             margin-bottom: 25px;
@@ -484,22 +486,9 @@
             cursor: not-allowed;
             border: 1px solid #666666;
         }
-
-        .flash-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #00f3ff;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 3000;
-            transition: opacity 0.1s ease-out;
-        }
     </style>
 </head>
 <body>
-
-    <!-- 화면 전체 네온 섬광 오버레이 -->
-    <div class="flash-overlay" id="flashOverlay"></div>
 
     <!-- 🔒 1. 비밀번호 인증 화면 -->
     <div class="auth-container" id="authContainer">
@@ -575,7 +564,7 @@
         "귀여운 여자친구의 뽀뽀 10번 💋", 
         "특별 주문 제작 맛도리케이크 🎂", 
         "이런.. 꽝입니다 😛", // 3번째 결과는 꽝 문구
-        "👑 HIDDEN PRIZE 👑\n🖥️ 32인치 모니터! 🖥️"
+        "🖥️ 32인치 180Hz 삼성 IPS 모니터! 🖥️"
     ];
 
     /* 🔑 비밀번호 인증 로직 */
@@ -905,10 +894,6 @@
 
         // 2) 4번째 추첨 (index == 3) -> 히든 전설 당첨 연출
         } else if (drawIndex === 3) {
-            const flash = document.getElementById("flashOverlay");
-            flash.style.opacity = "1";
-            setTimeout(() => { flash.style.opacity = "0"; }, 150);
-
             modalCard.classList.remove("fail-card");
             modalCard.classList.add("hidden-super-card");
             
