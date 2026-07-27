@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP LUCKY DRAW INVITATION</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Serif KR', serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #ecf0f1;
+            padding: 20px;
+        }
+
+        .ticket {
+            background: linear-gradient(145deg, #181d24 0%, #0d1015 100%);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(212, 175, 55, 0.25);
+            position: relative;
+        }
+
+        .vip-tag {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.85rem;
+            letter-spacing: 4px;
+            color: #d4af37;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #d4af37;
+            margin-bottom: 25px;
+            word-break: keep-all;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #d4af37, transparent);
+            margin: 25px 0;
+        }
+
+        .content {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: #c8d6e5;
+            margin-bottom: 30px;
+            word-break: keep-all;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 15px 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Noto Serif KR', serif;
+            color: #0b0d12;
+            background: linear-gradient(135deg, #ffe066 0%, #d4af37 50%, #aa7c11 100%);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.5);
+        }
+
+        /* 🔒 비밀번호 안내 모달 팝업 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: linear-gradient(145deg, #181d24 0%, #0d1015 100%);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 380px;
+            padding: 35px 25px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
+            transform: scale(0.85) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-label {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: #d4af37;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .hint-box {
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px dashed #d4af37;
+            border-radius: 12px;
+            padding: 20px 15px;
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff1b8;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+            line-height: 1.5;
+        }
+
+        .close-btn {
+            padding: 10px 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Noto Serif KR', serif;
+            color: #0b0d12;
+            background: #d4af37;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #ffe066;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ticket">
+        <div class="vip-tag">Exclusive Invitation</div>
+        <div class="title">LUCKY DRAW</div>
+        <div class="subtitle">🎉 조연우를 위한 럭키 드로우 🎉</div>
+
+        <div class="divider"></div>
+
+        <div class="content">
+            특별한 당신만을 위해 준비된<br>
+            시크릿 럭키 드로우 이벤트에 초대합니다.<br><br>
+            아래 버튼을 눌러 시크릿 비밀번호를 확인하세요!
+        </div>
+
+        <!-- 🔑 비밀번호 확인 버튼 -->
+        <button class="btn" onclick="openHint()">비밀번호 확인하기 🔑</button>
+    </div>
+
+    <!-- 팝업 모달 -->
+    <div class="modal-overlay" id="hintModal">
+        <div class="modal-card">
+            <div class="modal-label">SECRET ACCESS CODE</div>
+            <div class="modal-title">🔑 인증 비밀번호</div>
+            
+            <div class="hint-box">
+                소중한 여자친구의 생일 4자리 🤭
+            </div>
+
+            <button class="close-btn" onclick="closeHint()">확인 완료</button>
+        </div>
+    </div>
+
+    <script>
+        function openHint() {
+            document.getElementById('hintModal').classList.add('active');
+        }
+
+        function closeHint() {
+            document.getElementById('hintModal').classList.remove('active');
+        }
+    </script>
+
+</body>
+</html>
