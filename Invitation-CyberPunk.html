@@ -30,7 +30,110 @@
             overflow: hidden;
         }
 
-        /* 🎟️ 사이버 티켓 카운터 카드 */
+        /* ----------------------------------
+           0. 사전 수신 경고 화면 (Gatekeeper)
+        ---------------------------------- */
+        .gate-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #030308;
+            background-image: radial-gradient(circle at center, rgba(0, 243, 255, 0.08) 0%, rgba(3, 3, 8, 0.95) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        .gate-container.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .gate-card {
+            background: rgba(10, 14, 23, 0.95);
+            border: 2px solid #ff007f;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+            padding: 45px 30px 35px 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 0, 127, 0.4), inset 0 0 20px rgba(255, 0, 127, 0.15);
+            position: relative;
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 25px rgba(255, 0, 127, 0.3); }
+            100% { box-shadow: 0 0 45px rgba(255, 0, 127, 0.6), 0 0 10px #00f3ff; }
+        }
+
+        .gate-card::before {
+            content: "INCOMING ENCRYPTED SIGNAL";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff007f;
+            color: #fff;
+            font-size: 0.65rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            padding: 3px 12px;
+            letter-spacing: 1.5px;
+            border-radius: 2px;
+            white-space: nowrap;
+            box-shadow: 0 0 10px #ff007f;
+        }
+
+        .alert-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px #ff007f;
+            animation: alertBlink 1.2s infinite;
+        }
+
+        @keyframes alertBlink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.95); }
+        }
+
+        .gate-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 10px #ffffff;
+            margin-bottom: 12px;
+            word-break: keep-all;
+            line-height: 1.4;
+        }
+
+        .gate-desc {
+            font-size: 0.95rem;
+            color: #ff007f;
+            text-shadow: 0 0 8px rgba(255, 0, 127, 0.6);
+            margin-bottom: 30px;
+            font-weight: 700;
+            word-break: keep-all;
+        }
+
+        .btn-open {
+            background: linear-gradient(135deg, #ff007f 0%, #ff0055 100%) !important;
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.6) !important;
+            color: #ffffff !important;
+        }
+
+        .btn-open:hover {
+            box-shadow: 0 0 35px rgba(255, 0, 127, 0.9) !important;
+        }
+
+
+        /* ----------------------------------
+           1. 🎟️ 사이버 티켓 메인 카드
+        ---------------------------------- */
         .ticket {
             background: rgba(10, 14, 23, 0.9);
             border: 2px solid #00f3ff;
@@ -130,13 +233,13 @@
             box-shadow: 0 0 35px rgba(0, 243, 255, 0.9);
         }
 
-        /* 🔒 사이버 모달 팝업 */
+        /* ----------------------------------
+           2. 🔒 사이버 모달 팝업
+        ---------------------------------- */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background: rgba(3, 3, 8, 0.88);
             backdrop-filter: blur(10px);
             display: flex;
@@ -203,7 +306,6 @@
             word-break: keep-all;
         }
 
-        /* ✨ 하단 스페셜 태그 문구 */
         .sub-hint {
             font-size: 0.95rem;
             color: #ffe600;
@@ -236,6 +338,17 @@
 </head>
 <body>
 
+    <!-- 🚨 0. 최초 수신 화면 (Gatekeeper Overlay) -->
+    <div class="gate-container" id="gateOverlay">
+        <div class="gate-card">
+            <div class="alert-icon">📩</div>
+            <div class="gate-title">수상한 초대장이 도착했습니다!</div>
+            <div class="gate-desc">열어보시겠습니까? 🔓</div>
+            <button class="btn btn-open" onclick="unlockTicket()">초대장 열어보기 ⚡</button>
+        </div>
+    </div>
+
+    <!-- 🎟️ 1. 메인 초대장 카운터 카드 -->
     <div class="ticket">
         <div class="vip-tag">EXCLUSIVE INVITATION</div>
         <div class="title">LUCKY DRAW</div>
@@ -244,26 +357,26 @@
         <div class="divider"></div>
 
         <div class="content">
+            지난 반년간 수고 많으셨습니다.<br>
             고생한 당신을 위해 준비된<br>
             시크릿 럭키 드로우 이벤트에 초대합니다.<br><br>
-            아래 버튼을 눌러 시크릿 비밀번호를 확인하세요!
+            아래 버튼을 눌러 액세스 코드를 확인하세요!
         </div>
 
         <!-- 🔑 비밀번호 확인 버튼 -->
-        <button class="btn" onclick="openHint()">비밀번호 확인하기 🙈</button>
+        <button class="btn" onclick="openHint()">액세스 코드 확인하기 🙈</button>
     </div>
 
-    <!-- 팝업 모달 -->
+    <!-- 🔒 2. 비밀번호 힌트 모달 -->
     <div class="modal-overlay" id="hintModal">
         <div class="modal-card">
             <div class="modal-label">SECRET ACCESS CODE</div>
-            <div class="modal-title">🔑 인증 비밀번호</div>
+            <div class="modal-title">🔑 ACCESS CODE 🔑</div>
             
             <div class="hint-box">
                 소중한 여자친구의 생일 4자리 🤭
             </div>
 
-            <!-- 👇 추가된 문구 -->
             <div class="sub-hint">💡잘 외워두세요!💡</div>
 
             <button class="close-btn" onclick="closeHint()">확인 완료</button>
@@ -271,6 +384,12 @@
     </div>
 
     <script>
+        // 초대장 열기 함수
+        function unlockTicket() {
+            document.getElementById('gateOverlay').classList.add('hidden');
+        }
+
+        // 비밀번호 힌트 팝업 열기/닫기
         function openHint() {
             document.getElementById('hintModal').classList.add('active');
         }
