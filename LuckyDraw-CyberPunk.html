@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBERPUNK LUCKY DRAW :: JO YEONWOO</title>
+    <title>LUCKY DRAW :: 조연우</title>
     <!-- canvas-confetti 라이브러리 (폭죽 연출용) -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -92,7 +92,7 @@
             font-size: 0.9rem;
             color: #ff007f;
             margin-bottom: 30px;
-            text-shadow: 0 0 8px rgba(ff, 0, 127, 0.5);
+            text-shadow: 0 0 8px rgba(255, 0, 127, 0.5);
         }
 
         .pw-display {
@@ -262,15 +262,13 @@
             background: rgba(10, 14, 23, 0.95);
             border: 2px solid #ff007f;
             border-radius: 12px;
-            width: 420px;
+            width: 500px;
             padding: 35px 25px;
             text-align: center;
             box-shadow: 0 0 50px rgba(255, 0, 127, 0.6);
         }
 
-        /* 🔧 수정: 미니게임 헤더 폰트 크기는 유지하고 한 줄로 고정 */
         .minigame-card .modal-header {
-            /* 폰트 사이즈는 그대로 유지 (Orbitron 1.1rem) */
             font-size: 1.1rem;
             font-family: 'Orbitron', sans-serif;
             color: #ff007f;
@@ -278,10 +276,8 @@
             letter-spacing: 2px;
             margin-bottom: 15px;
             font-weight: bold;
-
-            /* ✅ 추가된 속성: 줄바꿈 금지 및 스크롤/넘침 허용 방지 */
-            white-space: nowrap;    /* 강제로 한 줄로 유지 (폰트 크기 유지됨) */
-            width: auto;            /* 박스 크기에 맞게 자동으로 공간 확보 */
+            white-space: nowrap;
+            width: auto;
         }
 
         .minigame-timer {
@@ -313,7 +309,6 @@
             transition: width 0.08s linear; 
         }
 
-        /* 🔧 수정: tap-btn 폰트 및 텍스트 맞춤 설정 */
         .tap-btn {
             width: 140px;
             height: 140px;
@@ -322,7 +317,7 @@
             border: 3px solid #00f3ff;
             color: #ffffff;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.15rem; /* 버튼 내 맞춤 크기 조절 */
+            font-size: 1.15rem;
             font-weight: 900;
             line-height: 1.2;
             letter-spacing: 0.5px;
@@ -381,7 +376,6 @@
             transform: scale(1) translateY(0);
         }
 
-        /* 🔧 수정: 동기화된 히든 네온 카드 pulse 애니메이션 */
         .modal-card.hidden-super-card {
             border: 2px solid #ffe600 !important;
             animation: cyberCardGlowSync 1.8s infinite ease-in-out !important;
@@ -406,7 +400,7 @@
 
         .modal-header {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: #00f3ff;
             text-shadow: 0 0 10px #00f3ff;
             letter-spacing: 2px;
@@ -422,7 +416,6 @@
             font-weight: 700;
         }
 
-        /* 기본 경품 박스 */
         .prize-box {
             background: rgba(0, 243, 255, 0.05);
             border: 1px dashed #00f3ff;
@@ -437,7 +430,6 @@
             line-height: 1.4;
         }
 
-        /* 🔧 수정: 바깥 박스와 완벽히 일치하도록 동기화된 히든 경품 박스 */
         .prize-box.super-prize {
             background: radial-gradient(circle, rgba(255,0,127,0.2) 0%, rgba(5,5,10,0.95) 100%) !important;
             border: 2px solid #ffe600 !important;
@@ -480,9 +472,17 @@
             transition: all 0.2s ease;
         }
 
-        .confirm-btn:hover {
+        .confirm-btn:hover:not(:disabled) {
             background: #ffffff;
             box-shadow: 0 0 30px #ffffff;
+        }
+
+        .confirm-btn:disabled {
+            background: #444444 !important;
+            color: #888888 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            border: 1px solid #666666;
         }
 
         .flash-overlay {
@@ -574,8 +574,8 @@
     const predeterminedResults = [
         "귀여운 여자친구의 뽀뽀 10번 💋", 
         "특별 주문 제작 맛도리케이크 🎂", 
-        "🎉 3차 정식 당첨! 🎉\n[원하시는 진짜 메인 선물을 여기에 적어주세요! 🎁]",
-        "👑 LEGENDARY HIDDEN PRIZE 👑\n작년에 트롤해서 못받았던\n🖥️ 32인치 모니터! 🖥️"
+        "이런.. 꽝입니다 😛", // 3번째 결과는 꽝 문구
+        "👑 HIDDEN PRIZE 👑\n🖥️ 32인치 모니터! 🖥️"
     ];
 
     /* 🔑 비밀번호 인증 로직 */
@@ -655,6 +655,7 @@
     let currentDraw = 0;
     let isDrawing = false;
     let isMinigameFailed = false;
+    let retryTimer = null;
     
     let friction = 0.99;
     let targetFriction = 0.99;
@@ -782,7 +783,7 @@
         }, 500);
     }
 
-    /* 💀 미니게임 실패 모달 */
+    /* 💀 미니게임 실패 모달 (3초 카운트다운) */
     function showFailModal() {
         const modal = document.getElementById("prizeModal");
         const modalCard = document.getElementById("mainModalCard");
@@ -800,11 +801,27 @@
         header.innerText = "🚨 SYSTEM OVERHEAT 🚨";
         header.style.color = "#ff0055";
         title.innerText = "도전 실패!";
-        content.innerText = "저런.. 불쌍하다 🤪\n손가락 속도가 너무 느려요!";
+        content.innerText = "저런.. 불쌍하다 🤪\n손가락이 너무 퉁퉁해요!";
         
-        confirmBtn.innerText = "재도전 (RETRY)";
+        let countdown = 3;
+        confirmBtn.disabled = true;
+        confirmBtn.innerText = `재도전 (${countdown}초 후 가능)`;
         confirmBtn.style.background = "#ff0055";
-        confirmBtn.style.boxShadow = "0 0 20px #ff0055";
+        confirmBtn.style.boxShadow = "none";
+
+        if (retryTimer) clearInterval(retryTimer);
+
+        retryTimer = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                confirmBtn.innerText = `재도전 (${countdown}초 후 가능)`;
+            } else {
+                clearInterval(retryTimer);
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "재도전 (RETRY)";
+                confirmBtn.style.boxShadow = "0 0 20px #ff0055";
+            }
+        }, 1000);
 
         modal.classList.add("active");
     }
@@ -819,7 +836,7 @@
         
         btn.disabled = true;
         btn.classList.remove("bonus-mode");
-        status.innerText = currentDraw === 3 ? "🔥 전설의 아이템 추출 중... 🔥" : "SEARCHING MATRIX...";
+        status.innerText = currentDraw === 3 ? "🔥 히든 상품 추출 중... 🔥" : "SEARCHING MATRIX...";
 
         balls.forEach(b => {
             b.isSelected = false;
@@ -854,14 +871,14 @@
             status.innerText = "";
 
             setTimeout(() => {
-                showModal(predeterminedResults[currentDraw], currentDraw === 3);
+                showModal(predeterminedResults[currentDraw], currentDraw);
             }, 1100);
 
         }, 4500);
     }
 
-    /* 🎁 성공/당첨 모달 */
-    function showModal(text, isBonus) {
+    /* 🎁 성공 / 꽝 / 히든 보너스 모달 처리 */
+    function showModal(text, drawIndex) {
         const modal = document.getElementById("prizeModal");
         const modalCard = document.getElementById("mainModalCard");
         const header = document.getElementById("modalHeader");
@@ -869,33 +886,53 @@
         const content = document.getElementById("prizeContent");
         const confirmBtn = document.getElementById("confirmBtn");
 
-        modalCard.classList.remove("fail-card");
-        content.classList.remove("fail-prize");
+        confirmBtn.disabled = false;
 
-        if (isBonus) {
+        // 1) 3번째 추첨 (index == 2) -> 꽝 연출 (빨간색)
+        if (drawIndex === 2) {
+            modalCard.classList.remove("hidden-super-card");
+            modalCard.classList.add("fail-card");
+            
+            content.classList.remove("super-prize");
+            content.classList.add("fail-prize");
+
+            header.innerText = "🚨 DRAW FAILED 🚨";
+            header.style.color = "#ff0055";
+            title.innerText = "아쉬워요! 😱";
+            confirmBtn.innerText = "확인 😭";
+            confirmBtn.style.background = "#ff0055";
+            confirmBtn.style.boxShadow = "0 0 20px #ff0055";
+
+        // 2) 4번째 추첨 (index == 3) -> 히든 전설 당첨 연출
+        } else if (drawIndex === 3) {
             const flash = document.getElementById("flashOverlay");
             flash.style.opacity = "1";
             setTimeout(() => { flash.style.opacity = "0"; }, 150);
 
+            modalCard.classList.remove("fail-card");
             modalCard.classList.add("hidden-super-card");
+            
+            content.classList.remove("fail-prize");
             content.classList.add("super-prize");
 
             header.innerText = "✨ ULTIMATE OVERLOAD ✨";
             header.style.color = "#ffe600";
-            title.innerText = "🏆 전설 등급 상품 당첨! 🏆";
+            title.innerText = "🏆 히든 상품 추출 완료! 🏆";
             confirmBtn.innerText = "대박 대박! 고마워 ❤️";
             confirmBtn.style.background = "#ffe600";
             confirmBtn.style.boxShadow = "0 0 25px #ffe600";
 
             fireSuperConfetti();
+
+        // 3) 1, 2번째 추첨 -> 일반 성공 연출
         } else {
-            modalCard.classList.remove("hidden-super-card");
-            content.classList.remove("super-prize");
+            modalCard.classList.remove("fail-card", "hidden-super-card");
+            content.classList.remove("fail-prize", "super-prize");
 
             header.innerText = "⚡ ITEM EXTRACTED ⚡";
             header.style.color = "#00f3ff";
             title.innerText = "🎁 상품을 받으세요! 🎁";
-            confirmBtn.innerText = "너무 좋아 !";
+            confirmBtn.innerText = "너무 좋아! 😍";
             confirmBtn.style.background = "#00f3ff";
             confirmBtn.style.boxShadow = "0 0 20px #00f3ff";
 
@@ -911,13 +948,14 @@
         const btn = document.getElementById("drawBtn");
         const status = document.getElementById("statusDisplay");
         
+        if (retryTimer) clearInterval(retryTimer);
         modal.classList.remove("active");
 
         if (isMinigameFailed) {
             btn.disabled = false;
             btn.innerText = "🔥 재도전 연타 시작 🔥";
             btn.classList.add("bonus-mode");
-            status.innerText = "게이지 100%를 달성해야 최종 해금이 됩니다!";
+            status.innerText = "히든 상품을 얻어보세요!";
             isMinigameFailed = false;
             return;
         }
