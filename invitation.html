@@ -155,12 +155,20 @@
             border: 1px dashed #d4af37;
             border-radius: 12px;
             padding: 20px 15px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             font-size: 1.2rem;
             font-weight: bold;
             color: #fff1b8;
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
             line-height: 1.5;
+        }
+
+        /* ✨ 추가된 안내 문구 스타일 */
+        .sub-hint {
+            font-size: 0.95rem;
+            color: #a0aab2;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
         }
 
         .close-btn {
@@ -209,6 +217,9 @@
             <div class="hint-box">
                 소중한 여자친구의 생일 4자리 🤭
             </div>
+
+            <!-- 👇 추가된 문구 -->
+            <div class="sub-hint">잘 외워두세요! 💡</div>
 
             <button class="close-btn" onclick="closeHint()">확인 완료</button>
         </div>
