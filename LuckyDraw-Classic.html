@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조연우를 위한 럭키 드로우</title>
+    <!-- canvas-confetti 라이브러리 (폭죽 연출용) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Playfair+Display:wght@700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Serif KR', serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #ecf0f1;
+            overflow: hidden;
+        }
+
+        /* ----------------------------------
+           1. 비밀번호 인증 화면 (Lock Screen)
+        ---------------------------------- */
+        .auth-container {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .auth-container.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .auth-card {
+            background: linear-gradient(145deg, #181d24 0%, #0d1015 100%);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            width: 380px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
+        }
+
+        .auth-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        .auth-desc {
+            font-size: 0.95rem;
+            color: #a0aab2;
+            margin-bottom: 30px;
+        }
+
+        .pw-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .pw-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #d4af37;
+            transition: all 0.2s ease;
+        }
+
+        .pw-dot.filled {
+            background: #d4af37;
+            box-shadow: 0 0 10px #d4af37;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .key-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            padding: 14px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .key-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #d4af37;
+        }
+
+        .error-msg {
+            color: #ff7675;
+            font-size: 0.85rem;
+            height: 20px;
+            margin-top: 15px;
+        }
+
+        /* ----------------------------------
+           2. 메인 추첨 화면
+        ---------------------------------- */
+        .main-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #d4af37;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: #a0aab2;
+            margin-bottom: 35px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .gacha-machine {
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border: 4px solid #d4af37;
+            border-radius: 50%;
+            box-shadow: 0 0 35px rgba(212, 175, 55, 0.25), inset 0 0 35px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .ball {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: inset -4px -4px 8px rgba(0,0,0,0.5), 2px 2px 6px rgba(0,0,0,0.3);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .ball.selected {
+            z-index: 100 !important;
+            transform: scale(2.5) !important;
+            border: 2px solid #fff;
+            box-shadow: 0 0 35px #d4af37, inset -3px -3px 6px rgba(0,0,0,0.4);
+        }
+
+        .status-display {
+            font-size: 1.2rem;
+            color: #d4af37;
+            height: 30px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .draw-button {
+            padding: 12px 30px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Noto Serif KR', serif;
+            color: #212530;
+            background: linear-gradient(135deg, #ffe066 0%, #d4af37 50%, #aa7c11 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .draw-button.bonus-mode {
+            background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+            color: #ffffff;
+            box-shadow: 0 6px 25px rgba(214, 48, 49, 0.6);
+            animation: buttonPulse 1.5s infinite;
+        }
+
+        @keyframes buttonPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .draw-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.5);
+        }
+
+        .draw-button:disabled {
+            background: #4a4a4a;
+            color: #888;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+            animation: none;
+        }
+
+        /* ----------------------------------
+           3. 연타 미니게임 모달 (Minigame)
+        ---------------------------------- */
+        .minigame-card {
+            background: linear-gradient(145deg, #1d222b 0%, #0d1015 100%);
+            border: 2px solid #ff7675;
+            border-radius: 20px;
+            width: 420px;
+            padding: 35px 25px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 118, 117, 0.4);
+        }
+
+        .minigame-timer {
+            font-size: 1.2rem;
+            color: #ff7675;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .gauge-container {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #ff7675;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .gauge-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff7675 0%, #d63031 100%);
+            box-shadow: 0 0 15px #ff7675;
+            transition: width 0.08s linear; 
+        }
+
+        .tap-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ff7675, #d63031);
+            border: 4px solid #fff;
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(214, 48, 49, 0.5);
+            transition: transform 0.05s ease;
+            user-select: none;
+        }
+
+        .tap-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* ----------------------------------
+           4. 일반 및 히든 당첨 / 실패 모달
+        ---------------------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: linear-gradient(145deg, #181d24 0%, #0d1015 100%);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            width: 440px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3), inset 0 0 15px rgba(212, 175, 55, 0.1);
+            transform: scale(0.8) translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        /* 🔥 히든 카드: 옵시디언 다크 톤 + 화려한 샴페인 골드 아우라 */
+        .modal-card.hidden-super-card {
+            background: linear-gradient(145deg, #161b24 0%, #090b0e 100%) !important;
+            border: 2px solid #f3d179 !important;
+            animation: goldGlow 2s infinite alternate ease-in-out !important;
+        }
+
+        @keyframes goldGlow {
+            0% {
+                box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(212, 175, 55, 0.2);
+            }
+            100% {
+                box-shadow: 0 0 60px rgba(255, 224, 102, 0.7), inset 0 0 30px rgba(212, 175, 55, 0.35);
+            }
+        }
+
+        .modal-card.fail-card {
+            background: linear-gradient(135deg, #2b0c0c 0%, #0d0e15 50%, #1f0808 100%) !important;
+            border: 2px solid #ff7675 !important;
+            box-shadow: 0 0 50px rgba(255, 118, 117, 0.6) !important;
+        }
+
+        .modal-header {
+            font-size: 1.1rem;
+            color: #d4af37;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            color: #ffffff;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        /* 기본 경품 박스 */
+        .prize-box {
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px dashed #d4af37;
+            border-radius: 12px;
+            padding: 25px 10px;
+            margin-bottom: 30px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff1b8;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            word-break: keep-all;
+            line-height: 1.4;
+        }
+
+        /* ✨ 히든 경품 박스: 강렬하지만 품격있는 골드 글로우 & 부드러운 펄스 */
+        .prize-box.super-prize {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(12, 15, 22, 0.95) 100%) !important;
+            border: 2px solid #f3d179 !important;
+            font-size: 1.55rem !important;
+            color: #ffffff !important;
+            text-shadow: 0 0 12px rgba(255, 224, 102, 0.9), 0 0 25px rgba(212, 175, 55, 0.6) !important;
+            animation: prizePulse 2s infinite ease-in-out !important;
+        }
+
+        @keyframes prizePulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 25px rgba(212, 175, 55, 0.35), inset 0 0 15px rgba(212, 175, 55, 0.2);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 40px rgba(255, 224, 102, 0.65), inset 0 0 25px rgba(212, 175, 55, 0.4);
+            }
+        }
+
+        .prize-box.fail-prize {
+            background: rgba(255, 118, 117, 0.1) !important;
+            border: 1px dashed #ff7675 !important;
+            font-size: 1.5rem !important;
+            color: #ff7675 !important;
+            text-shadow: 0 0 10px rgba(255, 118, 117, 0.5) !important;
+        }
+
+        .confirm-btn {
+            padding: 12px 35px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: 'Noto Serif KR', serif;
+            color: #0b0d12;
+            background: #d4af37;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .confirm-btn:hover {
+            background: #ffe066;
+        }
+
+        .flash-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #ffffff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 3000;
+            transition: opacity 0.1s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 화면 전체 섬광 오버레이 -->
+    <div class="flash-overlay" id="flashOverlay"></div>
+
+    <!-- 🔒 1. 비밀번호 인증 화면 -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="auth-title">VIP ACCESS CODE</div>
+            <div class="auth-desc">초대장의 4자리 비밀번호를 입력해주세요</div>
+            
+            <div class="pw-display">
+                <div class="pw-dot" id="dot0"></div>
+                <div class="pw-dot" id="dot1"></div>
+                <div class="pw-dot" id="dot2"></div>
+                <div class="pw-dot" id="dot3"></div>
+            </div>
+
+            <div class="keypad">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+                <button class="key-btn" onclick="clearKey()">C</button>
+                <button class="key-btn" onclick="pressKey('0')">0</button>
+                <button class="key-btn" onclick="deleteKey()">←</button>
+            </div>
+
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- 🎰 2. 메인 추첨 화면 -->
+    <div class="main-title">🎉 VIP EXCLUSIVE LUCKY DRAW 🎉</div>
+    <div class="subtitle">🤭 조연우를 위한 특별한 럭키 드로우 🤭<br>| 남은 기회 <span id="count" style="color:#d4af37; font-weight:bold;">3</span>회 |</div>
+
+    <div class="gacha-machine" id="machine"></div>
+
+    <div class="status-display" id="statusDisplay">추첨 버튼을 눌러주세요</div>
+
+    <button class="draw-button" id="drawBtn" onclick="handleDrawClick()">🔮추첨 시작🔮</button>
+
+    <!-- 🎮 3. 미니게임 모달 -->
+    <div class="modal-overlay" id="minigameModal">
+        <div class="minigame-card">
+            <div class="modal-header">🔥 BONUS CHALLENGE 🔥</div>
+            <div class="modal-title" style="font-size: 1.4rem; margin-bottom: 15px;">쉬지 말고 연타해서 게이지를 채우세요!</div>
+            <div class="minigame-timer">남은 시간: <span id="timerText">5.0</span>초</div>
+            
+            <div class="gauge-container">
+                <div class="gauge-bar" id="gaugeBar"></div>
+            </div>
+
+            <button class="tap-btn" id="tapBtn" onclick="registerTap()">PUSH!</button>
+        </div>
+    </div>
+
+    <!-- 🎁 4. 경품 결과 & 실패 모달 -->
+    <div class="modal-overlay" id="prizeModal">
+        <div class="modal-card" id="mainModalCard">
+            <div class="modal-header" id="modalHeader">🎉 축하합니다! 🎉</div>
+            <div class="modal-title" id="modalTitle">🎁 경품을 받으세요! 🎁</div>
+            <div class="prize-box" id="prizeContent"></div>
+            <button class="confirm-btn" id="confirmBtn" onclick="closeModal()">너무 좋아 !</button>
+        </div>
+    </div>
+
+<script>
+    const CORRECT_PASSCODE = "0407"; 
+
+    const predeterminedResults = [
+        "귀여운 여자친구의 뽀뽀 10번 💋", 
+        "특별 주문 제작 맛도리케이크 🎂", 
+        "🎉 3차 정식 당첨! 🎉\n[원하시는 진짜 메인 선물을 여기에 적어주세요! 🎁]",
+        "👑 LEGENDARY HIDDEN PRIZE 👑\n작년에 트롤해서 못받았던\n🖥️ 32인치 모니터! 🖥️"
+    ];
+
+    /* 🔑 비밀번호 인증 로직 */
+    let inputPasscode = "";
+
+    function pressKey(num) {
+        if (inputPasscode.length < 4) {
+            inputPasscode += num;
+            updateDots();
+            if (inputPasscode.length === 4) checkPasscode();
+        }
+    }
+
+    function deleteKey() {
+        inputPasscode = inputPasscode.slice(0, -1);
+        updateDots();
+        document.getElementById('errorMsg').innerText = "";
+    }
+
+    function clearKey() {
+        inputPasscode = "";
+        updateDots();
+        document.getElementById('errorMsg').innerText = "";
+    }
+
+    function updateDots() {
+        for (let i = 0; i < 4; i++) {
+            const dot = document.getElementById(`dot${i}`);
+            if (i < inputPasscode.length) dot.classList.add('filled');
+            else dot.classList.remove('filled');
+        }
+    }
+
+    function checkPasscode() {
+        if (inputPasscode === CORRECT_PASSCODE) {
+            document.getElementById('authContainer').classList.add('hidden');
+            fireConfetti();
+        } else {
+            document.getElementById('errorMsg').innerText = "비밀번호가 올바르지 않습니다.";
+            setTimeout(clearKey, 800);
+        }
+    }
+
+    /* 🎉 폭죽 연출 */
+    function fireConfetti() {
+        confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+
+    function fireSuperConfetti() {
+        const duration = 3.5 * 1000;
+        const animationEnd = Date.now() + duration;
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+
+            confetti({
+                particleCount: 50,
+                startVelocity: 30,
+                spread: 360,
+                origin: { x: Math.random(), y: Math.random() - 0.2 },
+                colors: ['#ffe066', '#d4af37', '#ffffff', '#ff7675']
+            });
+        }, 250);
+    }
+
+    /* 🔮 추첨 머신 물리 로직 */
+    const machine = document.getElementById("machine");
+    const totalBalls = 35;
+    const colors = ['#d4af37', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#f39c12', '#ecf0f1'];
+    let balls = [];
+    let currentDraw = 0;
+    let isDrawing = false;
+    let isMinigameFailed = false;
+    
+    let friction = 0.99;
+    let targetFriction = 0.99;
+
+    for (let i = 0; i < totalBalls; i++) {
+        const ball = document.createElement("div");
+        ball.classList.add("ball");
+        ball.style.backgroundColor = colors[i % colors.length];
+        
+        ball.x = Math.random() * 240 + 20;
+        ball.y = Math.random() * 240 + 20;
+        ball.vx = (Math.random() - 0.5) * 3;
+        ball.vy = (Math.random() - 0.5) * 3;
+        
+        ball.style.left = ball.x + "px";
+        ball.style.top = ball.y + "px";
+        
+        machine.appendChild(ball);
+        balls.push(ball);
+    }
+
+    function updatePhysics() {
+        friction += (targetFriction - friction) * 0.0005;
+
+        balls.forEach(ball => {
+            if (ball.isSelected) return;
+
+            ball.vx *= friction;
+            ball.vy *= friction;
+
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            const centerX = 144;
+            const centerY = 144;
+            const dx = ball.x - centerX;
+            const dy = ball.y - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist > 124) {
+                const angle = Math.atan2(dy, dx);
+                ball.x = centerX + Math.cos(angle) * 124;
+                ball.y = centerY + Math.sin(angle) * 124;
+                ball.vx *= -0.85;
+                ball.vy *= -0.85;
+            }
+
+            ball.style.left = ball.x + "px";
+            ball.style.top = ball.y + "px";
+        });
+
+        requestAnimationFrame(updatePhysics);
+    }
+
+    updatePhysics();
+
+    /* 🎮 버튼 클릭 처리 */
+    function handleDrawClick() {
+        if (isDrawing) return;
+
+        if (currentDraw === 3) {
+            startMinigame();
+        } else {
+            startDraw();
+        }
+    }
+
+    /* 🕹️ 게이지 감퇴(Decay)가 추가된 연타 미니게임 로직 */
+    let gaugeProgress = 0;
+    let gameTimer = null;
+    let timeLeft = 5.0;
+
+    function startMinigame() {
+        gaugeProgress = 0;
+        timeLeft = 5.0;
+        document.getElementById("gaugeBar").style.width = "0%";
+        document.getElementById("timerText").innerText = "5.0";
+        document.getElementById("tapBtn").disabled = false;
+        document.getElementById("minigameModal").classList.add("active");
+
+        gameTimer = setInterval(() => {
+            timeLeft -= 0.1;
+
+            if (gaugeProgress > 0) {
+                gaugeProgress -= 1.2; 
+                if (gaugeProgress < 0) gaugeProgress = 0;
+                document.getElementById("gaugeBar").style.width = gaugeProgress + "%";
+            }
+
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                endMinigame();
+            }
+            document.getElementById("timerText").innerText = timeLeft.toFixed(1);
+        }, 100);
+    }
+
+    function registerTap() {
+        if (timeLeft <= 0) return;
+        gaugeProgress += 5; 
+        if (gaugeProgress > 100) gaugeProgress = 100;
+        document.getElementById("gaugeBar").style.width = gaugeProgress + "%";
+
+        if (gaugeProgress >= 100) {
+            endMinigame();
+        }
+    }
+
+    function endMinigame() {
+        clearInterval(gameTimer);
+        document.getElementById("tapBtn").disabled = true;
+        
+        setTimeout(() => {
+            document.getElementById("minigameModal").classList.remove("active");
+            
+            if (gaugeProgress >= 100) {
+                isMinigameFailed = false;
+                startDraw();
+            } else {
+                isMinigameFailed = true;
+                showFailModal();
+            }
+        }, 500);
+    }
+
+    /* 💀 미니게임 실패 모달 띄우기 */
+    function showFailModal() {
+        const modal = document.getElementById("prizeModal");
+        const modalCard = document.getElementById("mainModalCard");
+        const header = document.getElementById("modalHeader");
+        const title = document.getElementById("modalTitle");
+        const content = document.getElementById("prizeContent");
+        const confirmBtn = document.getElementById("confirmBtn");
+
+        modalCard.classList.remove("hidden-super-card");
+        modalCard.classList.add("fail-card");
+        
+        content.classList.remove("super-prize");
+        content.classList.add("fail-prize");
+
+        header.innerText = "😭 CHALLENGE FAILED 😭";
+        header.style.color = "#ff7675";
+        title.innerText = "시간 초과!";
+        content.innerText = "저런.. 불쌍하다 🤪\n손가락 속도가 너무 느려요!";
+        
+        confirmBtn.innerText = "다시 도전할래 🥺";
+        confirmBtn.style.background = "#ff7675";
+
+        modal.classList.add("active");
+    }
+
+    /* 🔮 추첨 로직 */
+    function startDraw() {
+        if (currentDraw >= 4) return;
+
+        isDrawing = true;
+        const btn = document.getElementById("drawBtn");
+        const status = document.getElementById("statusDisplay");
+        
+        btn.disabled = true;
+        btn.classList.remove("bonus-mode");
+        status.innerText = currentDraw === 3 ? "🔥 전설의 경품을 추출하는 중... 🔥" : "추첨 진행 중...";
+
+        balls.forEach(b => {
+            b.isSelected = false;
+            b.classList.remove("selected");
+        });
+
+        targetFriction = 0.995;
+        friction = 0.995;
+        balls.forEach(ball => {
+            ball.vx = (Math.random() - 0.5) * 45;
+            ball.vy = (Math.random() - 0.5) * 45;
+        });
+
+        setTimeout(() => {
+            status.innerText = "운명의 공 선택 중...";
+            targetFriction = 0.88;
+        }, 1500);
+
+        setTimeout(() => {
+            balls.forEach(b => { b.vx = 0; b.vy = 0; });
+
+            const pickedIndex = Math.floor(Math.random() * balls.length);
+            const pickedBall = balls[pickedIndex];
+            
+            pickedBall.isSelected = true;
+            pickedBall.x = 144;
+            pickedBall.y = 144;
+            pickedBall.style.left = "144px";
+            pickedBall.style.top = "144px";
+            pickedBall.classList.add("selected");
+
+            status.innerText = "";
+
+            setTimeout(() => {
+                showModal(predeterminedResults[currentDraw], currentDraw === 3);
+            }, 1100);
+
+        }, 4500);
+    }
+
+    /* 🎁 성공/당첨 모달 띄우기 */
+    function showModal(text, isBonus) {
+        const modal = document.getElementById("prizeModal");
+        const modalCard = document.getElementById("mainModalCard");
+        const header = document.getElementById("modalHeader");
+        const title = document.getElementById("modalTitle");
+        const content = document.getElementById("prizeContent");
+        const confirmBtn = document.getElementById("confirmBtn");
+
+        modalCard.classList.remove("fail-card");
+        content.classList.remove("fail-prize");
+
+        if (isBonus) {
+            const flash = document.getElementById("flashOverlay");
+            flash.style.opacity = "1";
+            setTimeout(() => { flash.style.opacity = "0"; }, 150);
+
+            modalCard.classList.add("hidden-super-card");
+            content.classList.add("super-prize");
+
+            header.innerText = "✨ ULTIMATE JACKPOT ✨";
+            header.style.color = "#ffe066";
+            title.innerText = "🏆 대박 히든 경품 당첨! 🏆";
+            confirmBtn.innerText = "대박 대박! 고마워 ❤️";
+            confirmBtn.style.background = "linear-gradient(135deg, #ffe066, #d4af37)";
+
+            fireSuperConfetti();
+        } else {
+            modalCard.classList.remove("hidden-super-card");
+            content.classList.remove("super-prize");
+
+            header.innerText = "🎉 축하합니다! 🎉";
+            header.style.color = "#d4af37";
+            title.innerText = "🎁 경품을 받으세요! 🎁";
+            confirmBtn.innerText = "너무 좋아 !";
+            confirmBtn.style.background = "#d4af37";
+
+            fireConfetti();
+        }
+
+        content.innerHTML = text.replace(/\n/g, '<br>');
+        modal.classList.add("active");
+    }
+
+    function closeModal() {
+        const modal = document.getElementById("prizeModal");
+        const btn = document.getElementById("drawBtn");
+        const status = document.getElementById("statusDisplay");
+        
+        modal.classList.remove("active");
+
+        if (isMinigameFailed) {
+            btn.disabled = false;
+            btn.innerText = "🔥 다시 도전하기 🔥";
+            btn.classList.add("bonus-mode");
+            status.innerText = "게이지 100%를 채워야 추첨이 시작됩니다!";
+            isMinigameFailed = false;
+            return;
+        }
+
+        currentDraw++;
+        
+        const remaining = Math.max(0, 3 - currentDraw);
+        document.getElementById("count").innerText = remaining;
+
+        if (currentDraw === 3) {
+            btn.disabled = false;
+            btn.innerText = "😈 아쉬운가요? 😈";
+            btn.classList.add("bonus-mode");
+            status.innerText = "숨겨진 미니게임 기회가 열렸습니다!";
+        } else if (currentDraw >= 4) {
+            btn.disabled = true;
+            btn.innerText = "⭐ 모든 추첨 완료! ⭐";
+            btn.classList.remove("bonus-mode");
+            status.innerText = "💃 축하합니다! 모든 선물을 받아가세요! 💃";
+        } else {
+            btn.disabled = false;
+            btn.innerText = `다시 추첨하기 (${remaining}회 남음)`;
+            status.innerText = "다음 추첨을 진행해 주세요.";
+        }
+
+        targetFriction = 0.98;
+        isDrawing = false;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBERPUNK LUCKY DRAW :: JO YEONWOO</title>
+    <!-- canvas-confetti 라이브러리 (폭죽 연출용) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Orbitron', sans-serif;
+            background: #05050a;
+            /* 사이버 그리드 배경 연출 */
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* ----------------------------------
+           1. 비밀번호 인증 화면 (Lock Screen)
+        ---------------------------------- */
+        .auth-container {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #030308;
+            background-image: radial-gradient(circle at center, rgba(255, 0, 127, 0.1) 0%, rgba(3, 3, 8, 0.95) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .auth-container.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .auth-card {
+            background: rgba(10, 14, 23, 0.9);
+            border: 2px solid #00f3ff;
+            border-radius: 12px;
+            width: 380px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4), inset 0 0 15px rgba(0, 243, 255, 0.1);
+            position: relative;
+        }
+
+        .auth-card::before {
+            content: "SECURITY LEVEL :: MAXIMUM";
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #00f3ff;
+            color: #000;
+            font-size: 0.65rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            padding: 2px 8px;
+            letter-spacing: 1px;
+        }
+
+        .auth-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #00f3ff;
+            text-shadow: 0 0 10px #00f3ff;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .auth-desc {
+            font-size: 0.9rem;
+            color: #ff007f;
+            margin-bottom: 30px;
+            text-shadow: 0 0 8px rgba(ff, 0, 127, 0.5);
+        }
+
+        .pw-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .pw-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 2px solid #00f3ff;
+            background: rgba(0, 243, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .pw-dot.filled {
+            background: #ff007f;
+            border-color: #ff007f;
+            box-shadow: 0 0 15px #ff007f;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .key-btn {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            color: #00f3ff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 14px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .key-btn:hover {
+            background: #00f3ff;
+            color: #000;
+            box-shadow: 0 0 15px #00f3ff;
+        }
+
+        .error-msg {
+            color: #ff0055;
+            font-size: 0.85rem;
+            height: 20px;
+            margin-top: 15px;
+            text-shadow: 0 0 8px #ff0055;
+        }
+
+        /* ----------------------------------
+           2. 메인 추첨 화면
+        ---------------------------------- */
+        .main-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px #00f3ff, 0 0 25px rgba(0, 243, 255, 0.6);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ffe600;
+            text-shadow: 0 0 10px rgba(255, 230, 0, 0.6);
+            margin-bottom: 35px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .gacha-machine {
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(0,243,255,0.1) 0%, rgba(5,5,10,0.9) 100%);
+            border: 3px solid #ff007f;
+            border-radius: 50%;
+            box-shadow: 0 0 35px rgba(255, 0, 127, 0.4), inset 0 0 30px rgba(0, 243, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .ball {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 8px rgba(255,255,255,0.6);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .ball.selected {
+            z-index: 100 !important;
+            transform: scale(2.5) !important;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 40px #00f3ff, inset 0 0 15px #ffffff;
+        }
+
+        .status-display {
+            font-family: 'Orbitron', 'Noto Sans KR', sans-serif;
+            font-size: 1.2rem;
+            color: #00f3ff;
+            text-shadow: 0 0 10px #00f3ff;
+            height: 30px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .draw-button {
+            padding: 14px 35px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            font-family: 'Orbitron', 'Noto Sans KR', sans-serif;
+            color: #000000;
+            background: linear-gradient(135deg, #00f3ff 0%, #00a8ff 100%);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
+            transition: all 0.2s ease;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        }
+
+        .draw-button.bonus-mode {
+            background: linear-gradient(135deg, #ff007f 0%, #ff0055 100%);
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.8);
+            animation: cyberPulse 1.2s infinite alternate;
+        }
+
+        @keyframes cyberPulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px #ff007f; }
+            100% { transform: scale(1.06); box-shadow: 0 0 40px #ff007f, 0 0 10px #00f3ff; }
+        }
+
+        .draw-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            filter: brightness(1.2);
+        }
+
+        .draw-button:disabled {
+            background: #222;
+            color: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+            animation: none;
+        }
+
+        /* ----------------------------------
+           3. 연타 미니게임 모달 (Minigame)
+        ---------------------------------- */
+        .minigame-card {
+            background: rgba(10, 14, 23, 0.95);
+            border: 2px solid #ff007f;
+            border-radius: 12px;
+            width: 420px;
+            padding: 35px 25px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 0, 127, 0.6);
+        }
+
+        /* 🔧 수정: 미니게임 헤더 폰트 크기는 유지하고 한 줄로 고정 */
+        .minigame-card .modal-header {
+            /* 폰트 사이즈는 그대로 유지 (Orbitron 1.1rem) */
+            font-size: 1.1rem;
+            font-family: 'Orbitron', sans-serif;
+            color: #ff007f;
+            text-shadow: 0 0 10px #ff007f;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            font-weight: bold;
+
+            /* ✅ 추가된 속성: 줄바꿈 금지 및 스크롤/넘침 허용 방지 */
+            white-space: nowrap;    /* 강제로 한 줄로 유지 (폰트 크기 유지됨) */
+            width: auto;            /* 박스 크기에 맞게 자동으로 공간 확보 */
+        }
+
+        .minigame-timer {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: #ff007f;
+            text-shadow: 0 0 10px #ff007f;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .gauge-container {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #00f3ff;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        .gauge-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff007f 0%, #00f3ff 100%);
+            box-shadow: 0 0 20px #00f3ff;
+            transition: width 0.08s linear; 
+        }
+
+        /* 🔧 수정: tap-btn 폰트 및 텍스트 맞춤 설정 */
+        .tap-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff007f 0%, #99004d 100%);
+            border: 3px solid #00f3ff;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.15rem; /* 버튼 내 맞춤 크기 조절 */
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: 0.5px;
+            word-break: break-all;
+            padding: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.8);
+            transition: transform 0.05s ease;
+            user-select: none;
+            text-shadow: 0 0 8px #ffffff;
+        }
+
+        .tap-btn:active {
+            transform: scale(0.90);
+        }
+
+        /* ----------------------------------
+           4. 일반 및 히든 당첨 / 실패 모달
+        ---------------------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(3, 3, 8, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: rgba(10, 14, 23, 0.95);
+            border: 2px solid #00f3ff;
+            border-radius: 12px;
+            width: 440px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.4), inset 0 0 20px rgba(0, 243, 255, 0.15);
+            transform: scale(0.8) translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        /* 🔧 수정: 동기화된 히든 네온 카드 pulse 애니메이션 */
+        .modal-card.hidden-super-card {
+            border: 2px solid #ffe600 !important;
+            animation: cyberCardGlowSync 1.8s infinite ease-in-out !important;
+        }
+
+        @keyframes cyberCardGlowSync {
+            0%, 100% {
+                box-shadow: 0 0 25px #ff007f, inset 0 0 15px #00f3ff;
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 50px #00f3ff, 0 0 20px #ffe600, inset 0 0 25px #ff007f;
+                transform: scale(1.015);
+            }
+        }
+
+        .modal-card.fail-card {
+            background: rgba(20, 5, 10, 0.95) !important;
+            border: 2px solid #ff0055 !important;
+            box-shadow: 0 0 50px rgba(255, 0, 85, 0.7) !important;
+        }
+
+        .modal-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: #00f3ff;
+            text-shadow: 0 0 10px #00f3ff;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            color: #ffffff;
+            text-shadow: 0 0 10px #ffffff;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        /* 기본 경품 박스 */
+        .prize-box {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px dashed #00f3ff;
+            border-radius: 8px;
+            padding: 25px 10px;
+            margin-bottom: 30px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 12px #00f3ff;
+            word-break: keep-all;
+            line-height: 1.4;
+        }
+
+        /* 🔧 수정: 바깥 박스와 완벽히 일치하도록 동기화된 히든 경품 박스 */
+        .prize-box.super-prize {
+            background: radial-gradient(circle, rgba(255,0,127,0.2) 0%, rgba(5,5,10,0.95) 100%) !important;
+            border: 2px solid #ffe600 !important;
+            font-size: 1.55rem !important;
+            color: #ffffff !important;
+            text-shadow: 0 0 10px #ffe600, 0 0 20px #ff007f, 0 0 30px #00f3ff !important;
+            animation: cyberBoxGlowSync 1.8s infinite ease-in-out !important;
+        }
+
+        @keyframes cyberBoxGlowSync {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255,0,127,0.5), inset 0 0 10px rgba(0,243,255,0.3);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 35px rgba(0,243,255,0.8), inset 0 0 20px rgba(255,0,127,0.5);
+            }
+        }
+
+        .prize-box.fail-prize {
+            background: rgba(255, 0, 85, 0.1) !important;
+            border: 1px dashed #ff0055 !important;
+            font-size: 1.5rem !important;
+            color: #ff0055 !important;
+            text-shadow: 0 0 12px #ff0055 !important;
+        }
+
+        .confirm-btn {
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            font-family: 'Orbitron', 'Noto Sans KR', sans-serif;
+            color: #000000;
+            background: #00f3ff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 20px #00f3ff;
+            transition: all 0.2s ease;
+        }
+
+        .confirm-btn:hover {
+            background: #ffffff;
+            box-shadow: 0 0 30px #ffffff;
+        }
+
+        .flash-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #00f3ff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 3000;
+            transition: opacity 0.1s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 화면 전체 네온 섬광 오버레이 -->
+    <div class="flash-overlay" id="flashOverlay"></div>
+
+    <!-- 🔒 1. 비밀번호 인증 화면 -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="auth-title">SYSTEM ACCESS</div>
+            <div class="auth-desc">초대장의 4자리 액세스 코드를 입력하세요</div>
+            
+            <div class="pw-display">
+                <div class="pw-dot" id="dot0"></div>
+                <div class="pw-dot" id="dot1"></div>
+                <div class="pw-dot" id="dot2"></div>
+                <div class="pw-dot" id="dot3"></div>
+            </div>
+
+            <div class="keypad">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+                <button class="key-btn" onclick="clearKey()">CLR</button>
+                <button class="key-btn" onclick="pressKey('0')">0</button>
+                <button class="key-btn" onclick="deleteKey()">←</button>
+            </div>
+
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- 🎰 2. 메인 추첨 화면 -->
+    <div class="main-title">⚡ VIP EXCLUSIVE LUCKY DRAW ⚡</div>
+    <div class="subtitle">👾 조연우 전용 럭키 드로우 👾<br>| 남은 횟수: <span id="count" style="color:#00f3ff; font-weight:bold;">3</span>회 |</div>
+
+    <div class="gacha-machine" id="machine"></div>
+
+    <div class="status-display" id="statusDisplay">SYSTEM READY :: 추첨 버튼을 누르세요</div>
+
+    <button class="draw-button" id="drawBtn" onclick="handleDrawClick()">⚡ 추첨 개시 ⚡</button>
+
+    <!-- 🎮 3. 미니게임 모달 -->
+    <div class="modal-overlay" id="minigameModal">
+        <div class="minigame-card">
+            <div class="modal-header">🔥 OVERCLOCK CHALLENGE 🔥</div>
+            <div class="modal-title" style="font-size: 1.4rem; margin-bottom: 15px;">마우스 연타로 게이지를 100% 채우세요!</div>
+            <div class="minigame-timer">LIMIT: <span id="timerText">5.0</span> SEC</div>
+            
+            <div class="gauge-container">
+                <div class="gauge-bar" id="gaugeBar"></div>
+            </div>
+
+            <button class="tap-btn" id="tapBtn" onclick="registerTap()">CLICK!</button>
+        </div>
+    </div>
+
+    <!-- 🎁 4. 상품 결과 & 실패 모달 -->
+    <div class="modal-overlay" id="prizeModal">
+        <div class="modal-card" id="mainModalCard">
+            <div class="modal-header" id="modalHeader">⚡ SYSTEM UNLOCKED ⚡</div>
+            <div class="modal-title" id="modalTitle">🎁 상품 획득 성공! 🎁</div>
+            <div class="prize-box" id="prizeContent"></div>
+            <button class="confirm-btn" id="confirmBtn" onclick="closeModal()">수락 (ACCEPT)</button>
+        </div>
+    </div>
+
+<script>
+    const CORRECT_PASSCODE = "0407"; 
+
+    const predeterminedResults = [
+        "귀여운 여자친구의 뽀뽀 10번 💋", 
+        "특별 주문 제작 맛도리케이크 🎂", 
+        "🎉 3차 정식 당첨! 🎉\n[원하시는 진짜 메인 선물을 여기에 적어주세요! 🎁]",
+        "👑 LEGENDARY HIDDEN PRIZE 👑\n작년에 트롤해서 못받았던\n🖥️ 32인치 모니터! 🖥️"
+    ];
+
+    /* 🔑 비밀번호 인증 로직 */
+    let inputPasscode = "";
+
+    function pressKey(num) {
+        if (inputPasscode.length < 4) {
+            inputPasscode += num;
+            updateDots();
+            if (inputPasscode.length === 4) checkPasscode();
+        }
+    }
+
+    function deleteKey() {
+        inputPasscode = inputPasscode.slice(0, -1);
+        updateDots();
+        document.getElementById('errorMsg').innerText = "";
+    }
+
+    function clearKey() {
+        inputPasscode = "";
+        updateDots();
+        document.getElementById('errorMsg').innerText = "";
+    }
+
+    function updateDots() {
+        for (let i = 0; i < 4; i++) {
+            const dot = document.getElementById(`dot${i}`);
+            if (i < inputPasscode.length) dot.classList.add('filled');
+            else dot.classList.remove('filled');
+        }
+    }
+
+    function checkPasscode() {
+        if (inputPasscode === CORRECT_PASSCODE) {
+            document.getElementById('authContainer').classList.add('hidden');
+            fireConfetti();
+        } else {
+            document.getElementById('errorMsg').innerText = "ACCESS DENIED :: 비밀번호 오류";
+            setTimeout(clearKey, 800);
+        }
+    }
+
+    /* 🎉 폭죽 연출 */
+    function fireConfetti() {
+        confetti({
+            particleCount: 90,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#00f3ff', '#ff007f', '#ffffff']
+        });
+    }
+
+    function fireSuperConfetti() {
+        const duration = 3.5 * 1000;
+        const animationEnd = Date.now() + duration;
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+
+            confetti({
+                particleCount: 60,
+                startVelocity: 35,
+                spread: 360,
+                origin: { x: Math.random(), y: Math.random() - 0.2 },
+                colors: ['#00f3ff', '#ff007f', '#ffe600', '#ffffff']
+            });
+        }, 250);
+    }
+
+    /* 🔮 추첨 머신 물리 로직 */
+    const machine = document.getElementById("machine");
+    const totalBalls = 35;
+    const colors = ['#00f3ff', '#ff007f', '#ffe600', '#00ff66', '#b000ff', '#ffffff'];
+    let balls = [];
+    let currentDraw = 0;
+    let isDrawing = false;
+    let isMinigameFailed = false;
+    
+    let friction = 0.99;
+    let targetFriction = 0.99;
+
+    for (let i = 0; i < totalBalls; i++) {
+        const ball = document.createElement("div");
+        ball.classList.add("ball");
+        const color = colors[i % colors.length];
+        ball.style.backgroundColor = color;
+        ball.style.boxShadow = `0 0 10px ${color}`;
+        
+        ball.x = Math.random() * 240 + 20;
+        ball.y = Math.random() * 240 + 20;
+        ball.vx = (Math.random() - 0.5) * 3;
+        ball.vy = (Math.random() - 0.5) * 3;
+        
+        ball.style.left = ball.x + "px";
+        ball.style.top = ball.y + "px";
+        
+        machine.appendChild(ball);
+        balls.push(ball);
+    }
+
+    function updatePhysics() {
+        friction += (targetFriction - friction) * 0.0005;
+
+        balls.forEach(ball => {
+            if (ball.isSelected) return;
+
+            ball.vx *= friction;
+            ball.vy *= friction;
+
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            const centerX = 144;
+            const centerY = 144;
+            const dx = ball.x - centerX;
+            const dy = ball.y - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist > 124) {
+                const angle = Math.atan2(dy, dx);
+                ball.x = centerX + Math.cos(angle) * 124;
+                ball.y = centerY + Math.sin(angle) * 124;
+                ball.vx *= -0.85;
+                ball.vy *= -0.85;
+            }
+
+            ball.style.left = ball.x + "px";
+            ball.style.top = ball.y + "px";
+        });
+
+        requestAnimationFrame(updatePhysics);
+    }
+
+    updatePhysics();
+
+    /* 🎮 버튼 클릭 처리 */
+    function handleDrawClick() {
+        if (isDrawing) return;
+
+        if (currentDraw === 3) {
+            startMinigame();
+        } else {
+            startDraw();
+        }
+    }
+
+    /* 🕹️ 게이지 감퇴(Decay) 미니게임 로직 */
+    let gaugeProgress = 0;
+    let gameTimer = null;
+    let timeLeft = 5.0;
+
+    function startMinigame() {
+        gaugeProgress = 0;
+        timeLeft = 5.0;
+        document.getElementById("gaugeBar").style.width = "0%";
+        document.getElementById("timerText").innerText = "5.0";
+        document.getElementById("tapBtn").disabled = false;
+        document.getElementById("minigameModal").classList.add("active");
+
+        gameTimer = setInterval(() => {
+            timeLeft -= 0.1;
+
+            if (gaugeProgress > 0) {
+                gaugeProgress -= 1.2; 
+                if (gaugeProgress < 0) gaugeProgress = 0;
+                document.getElementById("gaugeBar").style.width = gaugeProgress + "%";
+            }
+
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                endMinigame();
+            }
+            document.getElementById("timerText").innerText = timeLeft.toFixed(1);
+        }, 100);
+    }
+
+    function registerTap() {
+        if (timeLeft <= 0) return;
+        gaugeProgress += 5; 
+        if (gaugeProgress > 100) gaugeProgress = 100;
+        document.getElementById("gaugeBar").style.width = gaugeProgress + "%";
+
+        if (gaugeProgress >= 100) {
+            endMinigame();
+        }
+    }
+
+    function endMinigame() {
+        clearInterval(gameTimer);
+        document.getElementById("tapBtn").disabled = true;
+        
+        setTimeout(() => {
+            document.getElementById("minigameModal").classList.remove("active");
+            
+            if (gaugeProgress >= 100) {
+                isMinigameFailed = false;
+                startDraw();
+            } else {
+                isMinigameFailed = true;
+                showFailModal();
+            }
+        }, 500);
+    }
+
+    /* 💀 미니게임 실패 모달 */
+    function showFailModal() {
+        const modal = document.getElementById("prizeModal");
+        const modalCard = document.getElementById("mainModalCard");
+        const header = document.getElementById("modalHeader");
+        const title = document.getElementById("modalTitle");
+        const content = document.getElementById("prizeContent");
+        const confirmBtn = document.getElementById("confirmBtn");
+
+        modalCard.classList.remove("hidden-super-card");
+        modalCard.classList.add("fail-card");
+        
+        content.classList.remove("super-prize");
+        content.classList.add("fail-prize");
+
+        header.innerText = "🚨 SYSTEM OVERHEAT 🚨";
+        header.style.color = "#ff0055";
+        title.innerText = "도전 실패!";
+        content.innerText = "저런.. 불쌍하다 🤪\n손가락 속도가 너무 느려요!";
+        
+        confirmBtn.innerText = "재도전 (RETRY)";
+        confirmBtn.style.background = "#ff0055";
+        confirmBtn.style.boxShadow = "0 0 20px #ff0055";
+
+        modal.classList.add("active");
+    }
+
+    /* 🔮 추첨 로직 */
+    function startDraw() {
+        if (currentDraw >= 4) return;
+
+        isDrawing = true;
+        const btn = document.getElementById("drawBtn");
+        const status = document.getElementById("statusDisplay");
+        
+        btn.disabled = true;
+        btn.classList.remove("bonus-mode");
+        status.innerText = currentDraw === 3 ? "🔥 전설의 아이템 추출 중... 🔥" : "SEARCHING MATRIX...";
+
+        balls.forEach(b => {
+            b.isSelected = false;
+            b.classList.remove("selected");
+        });
+
+        targetFriction = 0.995;
+        friction = 0.995;
+        balls.forEach(ball => {
+            ball.vx = (Math.random() - 0.5) * 45;
+            ball.vy = (Math.random() - 0.5) * 45;
+        });
+
+        setTimeout(() => {
+            status.innerText = "TARGET LOCKED...";
+            targetFriction = 0.88;
+        }, 1500);
+
+        setTimeout(() => {
+            balls.forEach(b => { b.vx = 0; b.vy = 0; });
+
+            const pickedIndex = Math.floor(Math.random() * balls.length);
+            const pickedBall = balls[pickedIndex];
+            
+            pickedBall.isSelected = true;
+            pickedBall.x = 144;
+            pickedBall.y = 144;
+            pickedBall.style.left = "144px";
+            pickedBall.style.top = "144px";
+            pickedBall.classList.add("selected");
+
+            status.innerText = "";
+
+            setTimeout(() => {
+                showModal(predeterminedResults[currentDraw], currentDraw === 3);
+            }, 1100);
+
+        }, 4500);
+    }
+
+    /* 🎁 성공/당첨 모달 */
+    function showModal(text, isBonus) {
+        const modal = document.getElementById("prizeModal");
+        const modalCard = document.getElementById("mainModalCard");
+        const header = document.getElementById("modalHeader");
+        const title = document.getElementById("modalTitle");
+        const content = document.getElementById("prizeContent");
+        const confirmBtn = document.getElementById("confirmBtn");
+
+        modalCard.classList.remove("fail-card");
+        content.classList.remove("fail-prize");
+
+        if (isBonus) {
+            const flash = document.getElementById("flashOverlay");
+            flash.style.opacity = "1";
+            setTimeout(() => { flash.style.opacity = "0"; }, 150);
+
+            modalCard.classList.add("hidden-super-card");
+            content.classList.add("super-prize");
+
+            header.innerText = "✨ ULTIMATE OVERLOAD ✨";
+            header.style.color = "#ffe600";
+            title.innerText = "🏆 전설 등급 상품 당첨! 🏆";
+            confirmBtn.innerText = "대박 대박! 고마워 ❤️";
+            confirmBtn.style.background = "#ffe600";
+            confirmBtn.style.boxShadow = "0 0 25px #ffe600";
+
+            fireSuperConfetti();
+        } else {
+            modalCard.classList.remove("hidden-super-card");
+            content.classList.remove("super-prize");
+
+            header.innerText = "⚡ ITEM EXTRACTED ⚡";
+            header.style.color = "#00f3ff";
+            title.innerText = "🎁 상품을 받으세요! 🎁";
+            confirmBtn.innerText = "너무 좋아 !";
+            confirmBtn.style.background = "#00f3ff";
+            confirmBtn.style.boxShadow = "0 0 20px #00f3ff";
+
+            fireConfetti();
+        }
+
+        content.innerHTML = text.replace(/\n/g, '<br>');
+        modal.classList.add("active");
+    }
+
+    function closeModal() {
+        const modal = document.getElementById("prizeModal");
+        const btn = document.getElementById("drawBtn");
+        const status = document.getElementById("statusDisplay");
+        
+        modal.classList.remove("active");
+
+        if (isMinigameFailed) {
+            btn.disabled = false;
+            btn.innerText = "🔥 재도전 연타 시작 🔥";
+            btn.classList.add("bonus-mode");
+            status.innerText = "게이지 100%를 달성해야 최종 해금이 됩니다!";
+            isMinigameFailed = false;
+            return;
+        }
+
+        currentDraw++;
+        
+        const remaining = Math.max(0, 3 - currentDraw);
+        document.getElementById("count").innerText = remaining;
+
+        if (currentDraw === 3) {
+            btn.disabled = false;
+            btn.innerText = "😈 아쉬운가요? 😈";
+            btn.classList.add("bonus-mode");
+            status.innerText = "SYSTEM UNLOCKED :: 히든 보너스 오픈!";
+        } else if (currentDraw >= 4) {
+            btn.disabled = true;
+            btn.innerText = "⭐ SYSTEM ALL CLEARED ⭐";
+            btn.classList.remove("bonus-mode");
+            status.innerText = "💃 축하합니다! 모든 보상을 수령하세요! 💃";
+        } else {
+            btn.disabled = false;
+            btn.innerText = `다음 추첨 (남은 기회: ${remaining}회)`;
+            status.innerText = "SYSTEM READY :: 다음 추첨을 진행해 주세요.";
+        }
+
+        targetFriction = 0.98;
+        isDrawing = false;
+    }
+</script>
+
+</body>
+</html>
