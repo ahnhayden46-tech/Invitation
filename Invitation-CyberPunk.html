@@ -31,6 +31,85 @@
         }
 
         /* ----------------------------------
+           ⚡ [NEW] 박스/모달 전용 글리치 애니메이션 (RGB Split & Box Jitter)
+        ---------------------------------- */
+        .box-glitch-active {
+            position: relative;
+            animation: boxGlitchShake 0.45s cubic-bezier(0.25, 1, 0.5, 1) !important;
+        }
+
+        /* 박스 내부 치지직 빛 갈라짐 의상 레이어 연출 */
+        .box-glitch-active::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 243, 255, 0.15);
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: 100;
+            animation: boxOverlayFlash 0.45s steps(2, start);
+        }
+
+        @keyframes boxGlitchShake {
+            0% {
+                transform: translate(0, 0) skew(0deg);
+                box-shadow: 0 0 35px rgba(0, 243, 255, 0.35);
+            }
+            15% {
+                transform: translate(-6px, 3px) skew(-2deg);
+                box-shadow: -5px 0 25px #ff007f, 5px 0 25px #00f3ff;
+                filter: contrast(150%);
+            }
+            30% {
+                transform: translate(7px, -4px) skew(3deg);
+                box-shadow: 6px 0 30px #00f3ff, -6px 0 30px #ffe600;
+            }
+            45% {
+                transform: translate(-5px, -2px) skew(-1deg);
+                box-shadow: -4px 0 20px #ff007f;
+            }
+            60% {
+                transform: translate(4px, 5px) skew(2deg);
+                box-shadow: 4px 0 25px #00f3ff;
+            }
+            75% {
+                transform: translate(-2px, 1px) skew(-1deg);
+            }
+            100% {
+                transform: translate(0, 0) skew(0deg);
+                filter: none;
+            }
+        }
+
+        @keyframes boxOverlayFlash {
+            0% {
+                opacity: 0.9;
+                clip-path: inset(10% 0 60% 0);
+                background: rgba(255, 0, 127, 0.3);
+            }
+            25% {
+                opacity: 0.7;
+                clip-path: inset(50% 0 10% 0);
+                background: rgba(0, 243, 255, 0.3);
+            }
+            50% {
+                opacity: 1;
+                clip-path: inset(20% 0 40% 0);
+                background: rgba(255, 230, 0, 0.25);
+            }
+            75% {
+                opacity: 0.5;
+                clip-path: inset(70% 0 5% 0);
+                background: rgba(255, 0, 127, 0.2);
+            }
+            100% {
+                opacity: 0;
+                clip-path: none;
+            }
+        }
+
+
+        /* ----------------------------------
            0. 사전 수신 경고 화면 (Gatekeeper)
         ---------------------------------- */
         .gate-container {
@@ -44,7 +123,8 @@
             justify-content: center;
             z-index: 2000;
             padding: 20px;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
+            transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                        visibility 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .gate-container.hidden {
@@ -130,7 +210,6 @@
             box-shadow: 0 0 35px rgba(255, 0, 127, 0.9) !important;
         }
 
-
         /* ----------------------------------
            1. 🎟️ 사이버 티켓 메인 카드
         ---------------------------------- */
@@ -144,9 +223,9 @@
             text-align: center;
             box-shadow: 0 0 35px rgba(0, 243, 255, 0.35), inset 0 0 20px rgba(0, 243, 255, 0.1);
             position: relative;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
         }
 
-        /* 상단 상징 뱃지 태그 */
         .ticket::before {
             content: "SECURITY LEVEL :: VIP CLEARANCE";
             position: absolute;
@@ -223,7 +302,7 @@
             border-radius: 4px;
             cursor: pointer;
             box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
         }
 
@@ -247,7 +326,7 @@
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease;
+            transition: opacity 1.0s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1000;
         }
 
@@ -265,12 +344,14 @@
             padding: 35px 25px;
             text-align: center;
             box-shadow: 0 0 45px rgba(255, 0, 127, 0.5), inset 0 0 15px rgba(255, 0, 127, 0.2);
-            transform: scale(0.85) translateY(20px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0.8) translateY(30px);
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
+            opacity: 0;
         }
 
         .modal-overlay.active .modal-card {
             transform: scale(1) translateY(0);
+            opacity: 1;
         }
 
         .modal-label {
@@ -326,7 +407,7 @@
             border-radius: 4px;
             cursor: pointer;
             box-shadow: 0 0 20px #ff007f;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
 
         .close-btn:hover {
@@ -340,16 +421,16 @@
 
     <!-- 🚨 0. 최초 수신 화면 (Gatekeeper Overlay) -->
     <div class="gate-container" id="gateOverlay">
-        <div class="gate-card">
+        <div class="gate-card" id="gateCard">
             <div class="alert-icon">📩</div>
             <div class="gate-title">수상한 초대장이 도착했습니다!</div>
             <div class="gate-desc">열어보시겠습니까? 🔓</div>
-            <button class="btn btn-open" onclick="unlockTicket()">초대장 열어보기 ⚡</button>
+            <button class="btn btn-open" onclick="triggerTargetGlitch('gateCard', unlockTicket)">초대장 열어보기 ⚡</button>
         </div>
     </div>
 
     <!-- 🎟️ 1. 메인 초대장 카운터 카드 -->
-    <div class="ticket">
+    <div class="ticket" id="mainTicket">
         <div class="vip-tag">EXCLUSIVE INVITATION</div>
         <div class="title">LUCKY DRAW</div>
         <div class="subtitle">🎉 조연우를 위한 럭키 드로우 🎉</div>
@@ -357,21 +438,20 @@
         <div class="divider"></div>
 
         <div class="content">
-            지난 반년간 수고 많으셨습니다.<br>
             고생한 당신을 위해 준비된<br>
             시크릿 럭키 드로우 이벤트에 초대합니다.<br><br>
-            아래 버튼을 눌러 액세스 코드를 확인하세요!
+            아래 버튼을 눌러 시크릿 비밀번호를 확인하세요!
         </div>
 
         <!-- 🔑 비밀번호 확인 버튼 -->
-        <button class="btn" onclick="openHint()">액세스 코드 확인하기 🙈</button>
+        <button class="btn" onclick="triggerTargetGlitch('mainTicket', openHint)">비밀번호 확인하기 🙈</button>
     </div>
 
     <!-- 🔒 2. 비밀번호 힌트 모달 -->
     <div class="modal-overlay" id="hintModal">
-        <div class="modal-card">
+        <div class="modal-card" id="modalCard">
             <div class="modal-label">SECRET ACCESS CODE</div>
-            <div class="modal-title">🔑 ACCESS CODE 🔑</div>
+            <div class="modal-title">🔑 인증 비밀번호</div>
             
             <div class="hint-box">
                 소중한 여자친구의 생일 4자리 🤭
@@ -379,11 +459,33 @@
 
             <div class="sub-hint">💡잘 외워두세요!💡</div>
 
-            <button class="close-btn" onclick="closeHint()">확인 완료</button>
+            <button class="close-btn" onclick="triggerTargetGlitch('modalCard', closeHint)">확인 완료</button>
         </div>
     </div>
 
     <script>
+        // 타겟 박스/모달 요소 전용 글리치 애니메이션 실행 함수
+        function triggerTargetGlitch(targetId, callback) {
+            const targetElement = document.getElementById(targetId);
+
+            if (targetElement) {
+                // 해당 박스 카드에만 치지직 클래스 추가
+                targetElement.classList.add('box-glitch-active');
+
+                // 0.2초간 치지직거린 피크 타이밍에 화면 전환 액션 수행
+                setTimeout(() => {
+                    callback();
+                }, 200);
+
+                // 애니메이션 종료(0.45초) 후 효과 클래스 제거
+                setTimeout(() => {
+                    targetElement.classList.remove('box-glitch-active');
+                }, 450);
+            } else {
+                callback();
+            }
+        }
+
         // 초대장 열기 함수
         function unlockTicket() {
             document.getElementById('gateOverlay').classList.add('hidden');
