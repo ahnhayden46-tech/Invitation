@@ -561,10 +561,10 @@
     const CORRECT_PASSCODE = "0407"; 
 
     const predeterminedResults = [
-        "귀여운 여자친구의 뽀뽀 10번 💋", 
-        "특별 주문 제작 맛도리케이크 🎂", 
-        "이런.. 꽝입니다 😛", // 3번째 결과는 꽝 문구
-        "🖥️ 32인치 180Hz 삼성 IPS 모니터! 🖥️"
+        "뽀뽀 이용권 (10회) 💋", 
+        "메이크업 이용권 (취소 및 양도 불가)", 
+        "이런.. 꽝 😛", // 3번째 결과는 꽝 문구
+        "🖥️"
     ];
 
     /* 🔑 비밀번호 인증 로직 */
@@ -790,7 +790,7 @@
         header.innerText = "🚨 SYSTEM OVERHEAT 🚨";
         header.style.color = "#ff0055";
         title.innerText = "도전 실패!";
-        content.innerText = "저런.. 불쌍하다 😢\n손가락이 너무 퉁퉁해요!";
+        content.innerText = "저런..😢\n손가락이 너무 퉁퉁해요!";
         
         let countdown = 3;
         confirmBtn.disabled = true;
@@ -903,7 +903,7 @@
             header.innerText = "✨ ULTIMATE OVERLOAD ✨";
             header.style.color = "#ffe600";
             title.innerText = "🏆 히든 상품 추출 완료! 🏆";
-            confirmBtn.innerText = "대박 대박! 고마워 ❤️";
+            confirmBtn.innerText = "감사합니다 ❤️";
             confirmBtn.style.background = "#ffe600";
             confirmBtn.style.boxShadow = "0 0 25px #ffe600";
 
